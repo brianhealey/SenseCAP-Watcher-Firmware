@@ -21,8 +21,8 @@ jobs:
         echo "-v ${GITHUB_WORKSPACE}:/app/${{ github.repository }}"
     - name: esp-idf build
       run: |
-        export IDF_TARGET=$(echo "${{ inputs.target }}" | tr '[:upper:]' '[:lower:]' | tr -d '_-')
+        export IDF_TARGET="esp32s3"
         docker run -t -e IDF_TARGET="${IDF_TARGET}" -v "${GITHUB_WORKSPACE}:/app/${{ github.repository }}" \
-        -w "/app/${{ github.repository }}/${{ inputs.path }}" espressif/idf:${{ inputs.esp_idf_version }} \
-        /bin/bash -c 'git config --global --add safe.directory "*" && ${{ inputs.command }}'
+        -w "/app/${{ github.repository }}/examples/factory_firmware" espressif/idf:v5.2.1 \
+        /bin/bash -c 'git config --global --add safe.directory "*" && idf.py build'
       shell: bash
