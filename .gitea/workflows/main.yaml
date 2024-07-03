@@ -10,8 +10,8 @@ jobs:
       volumes:
         - app_vol:/app
       env:
-        HTTP_PROXY: "http://192.168.121.60:7890"
-        HTTPS_PROXY: "http://192.168.121.60:7890"
+        HTTP_PROXY: "http://192.168.121.60:7893"
+        HTTPS_PROXY: "https://192.168.121.60:7893"
     steps:
     - name: Checkout repo
       uses: actions/checkout@v4
