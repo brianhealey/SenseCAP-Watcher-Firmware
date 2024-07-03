@@ -20,5 +20,9 @@ jobs:
         pwd && ls -R
         echo "-v ${GITHUB_WORKSPACE}:/app/${{ github.repository }}"
     - name: esp-idf build
-      uses: espressif/idf:v5.2.1
-      run: echo $PWD && ls -R
+      run: |
+        export IDF_TARGET=$(echo "${{ inputs.target }}" | tr '[:upper:]' '[:lower:]' | tr -d '_-')
+        docker run -t -e IDF_TARGET="${IDF_TARGET}" -v "${GITHUB_WORKSPACE}:/app/${{ github.repository }}" \
+        -w "/app/${{ github.repository }}/${{ inputs.path }}" espressif/idf:${{ inputs.esp_idf_version }} \
+        /bin/bash -c 'git config --global --add safe.directory "*" && ${{ inputs.command }}'
+      shell: bash
