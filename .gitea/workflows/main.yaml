@@ -9,9 +9,6 @@ jobs:
       image: espressif/idf:v5.2.1
       volumes:
         - app_vol:/app
-      env:
-        HTTP_PROXY: "http://192.168.121.60:7893"
-        HTTPS_PROXY: "https://192.168.121.60:7893"
     steps:
     - name: Checkout repo
       uses: actions/checkout@v4
