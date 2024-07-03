@@ -1,0 +1,24 @@
+name: sensecap watcher factory firmware
+run-name: ${{ gitea.actor }} is building factory_fw
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+      with:
+        ref: ''
+        submodules: 'recursive'
+    - name: Check Env
+      run: |
+        pwd && ls -R
+        echo "-v ${GITHUB_WORKSPACE}:/app/${{ github.repository }}"
+        docker run -t -v /app/IAG-SE/SenseCAP-Watcher:/app/IAG-SE/SenseCAP-Watcher bash /usr/local/bin/bash -c 'ls -R /app'
+    - name: esp-idf build
+      uses: espressif/esp-idf-ci-action@v1
+      with:
+        esp_idf_version: v5.2.1
+        target: esp32s3
+        path: 'examples/factory_firmware/'
