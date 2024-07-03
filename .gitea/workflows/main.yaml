@@ -8,21 +8,22 @@ jobs:
     container:
       # image: espressif/idf:v5.2.1
       volumes:
-        - app_vol:/app
+        - /opt/act/IAG-SE/SenseCAP-Watcher/:/opt/act/IAG-SE/SenseCAP-Watcher/
     steps:
     - name: Checkout repo
       uses: actions/checkout@v4
       with:
         ref: ''
         submodules: 'recursive'
-    - name: Check Env
+    - name: Copy Repo
       run: |
-        pwd && ls -R
-        echo "-v ${GITHUB_WORKSPACE}:/app/${{ github.repository }}"
+        pwd && ls
+        cp -rf ./* /opt/act/IAG-SE/SenseCAP-Watcher/
+        ls /opt/act/IAG-SE/SenseCAP-Watcher/
     - name: esp-idf build
       run: |
         export IDF_TARGET="esp32s3"
-        docker run -t -e IDF_TARGET="${IDF_TARGET}" -v "${GITHUB_WORKSPACE}:/app/${{ github.repository }}" \
+        docker run -t -e IDF_TARGET="${IDF_TARGET}" -v "/opt/act/IAG-SE/SenseCAP-Watcher:/app/${{ github.repository }}" \
         -w "/app/${{ github.repository }}/examples/factory_firmware" espressif/idf:v5.2.1 \
         /bin/bash -c 'git config --global --add safe.directory "*" && idf.py build'
       shell: bash
