@@ -29,7 +29,7 @@ jobs:
           examples/factory_firmware/build/srmodels/srmodels.bin
           examples/factory_firmware/build/storage.bin
     - name: Release
-      uses: softprops/action-gh-release@v2
+      uses: akkuman/gitea-release-action@v1
       if: startsWith(github.ref, 'refs/tags/')
       with:
         files: watcher-factory-fw.zip
