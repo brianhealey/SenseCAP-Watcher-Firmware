@@ -9,7 +9,6 @@ jobs:
       # image: espressif/idf:v5.2.1
       volumes:
         - /opt/act/IAG-SE/SenseCAP-Watcher/:/opt/act/IAG-SE/SenseCAP-Watcher/
-      options: "--name watcher_builder"
     steps:
     - name: Checkout repo
       uses: actions/checkout@v4
@@ -28,7 +27,7 @@ jobs:
     - name: container bash
       run: |
           echo "GITHUB_ACTION_PATH: $GITHUB_ACTION_PATH"
-          docker run -t --volumes-from watcher_builder -w $GITHUB_WORKSPACE bash /usr/local/bin/bash -c 'ls'
+          docker run -t --volumes-from act_runner -w $GITHUB_WORKSPACE bash /usr/local/bin/bash -c 'ls'
     # - name: esp-idf build
     #   run: |
     #     export IDF_TARGET="esp32s3"  
