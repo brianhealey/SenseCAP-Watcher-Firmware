@@ -21,13 +21,13 @@ jobs:
         pwd && ls
         echo "job: ${{ job }} ${{ job.container }} ${{ job.container.id }}"
         echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
-        
+        env | sort
         cp -rf ./* /opt/act/IAG-SE/SenseCAP-Watcher/
         ls /opt/act/IAG-SE/SenseCAP-Watcher/
     - name: container bash
       run: |
           echo "GITHUB_ACTION_PATH: $GITHUB_ACTION_PATH"
-          docker run -t --volumes-from act_runner -w $GITHUB_WORKSPACE bash /usr/local/bin/bash -c 'ls'
+          docker run -t --volumes-from=${{ env.JOB_CONTAINER_NAME }} -w $GITHUB_WORKSPACE bash /usr/local/bin/bash -c 'ls'
     # - name: esp-idf build
     #   run: |
     #     export IDF_TARGET="esp32s3"  
