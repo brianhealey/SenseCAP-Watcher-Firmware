@@ -19,7 +19,7 @@ jobs:
       # copy it 
       run: |
         pwd && ls
-        echo "RUNNER_NAME: ${{ runner.name }}"
+        echo "job: ${{ job }} ${{ job.container }} ${{ job.container.id }}"
         echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
         
         cp -rf ./* /opt/act/IAG-SE/SenseCAP-Watcher/
