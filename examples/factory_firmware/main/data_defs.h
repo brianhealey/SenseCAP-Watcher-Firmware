@@ -38,7 +38,7 @@ struct view_data_wifi_st
     bool   is_connecting;
     bool   past_connected;
     bool   is_network;  //is connect network
-    char   ssid[32];
+    char   ssid[33];
     int8_t rssi;
     wifi_auth_mode_t authmode;
 };
@@ -46,7 +46,7 @@ struct view_data_wifi_st
 
 struct view_data_wifi_config
 {
-    char    ssid[32];
+    char    ssid[33];
     char    password[64];
     bool    have_password;
 };

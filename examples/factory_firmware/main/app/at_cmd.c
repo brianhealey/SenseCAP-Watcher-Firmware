@@ -19,6 +19,7 @@
 #include "esp_wifi.h"
 #include "cJSON.h"
 #include "esp_check.h"
+#include "sensecap-watcher.h"
 
 #include "data_defs.h"
 #include "event_loops.h"
@@ -890,6 +891,28 @@ at_cmd_error_code handle_deviceinfo_cfg_command(char *params)
         {
             ESP_LOGI(TAG, "Reset factory flag not found or not a valid number in JSON\n");
         }
+
+        cJSON *json_reboot = cJSON_GetObjectItemCaseSensitive(data, "reboot");
+        if (cJSON_IsNumber(json_reboot))
+        {
+            if ( json_reboot->valueint )
+            {
+                ESP_LOGI(TAG, "Reboot device\n");
+                //Allow No Response
+                esp_event_post_to(app_event_loop_handle, VIEW_EVENT_BASE, VIEW_EVENT_REBOOT, NULL, 0, pdMS_TO_TICKS(10000));
+            }
+        }
+
+        cJSON *json_shutdown = cJSON_GetObjectItemCaseSensitive(data, "shutdown");
+        if (cJSON_IsNumber(json_shutdown))
+        {
+            if ( json_shutdown->valueint )
+            {
+                ESP_LOGI(TAG, "Shutdown device\n");
+                //Allow No Response
+                esp_event_post_to(app_event_loop_handle, VIEW_EVENT_BASE, VIEW_EVENT_SHUTDOWN, NULL, 0, pdMS_TO_TICKS(10000));
+            }
+        }
     }
     else
     {
@@ -971,7 +994,6 @@ at_cmd_error_code handle_deviceinfo_command(char *params)
     if (himax_version == NULL)
     {
         ESP_LOGE(TAG, "Failed to get Himax software version\n");
-        return ERROR_DATA_READ_FAIL;
     }
 
     // Get the brightness value
@@ -996,6 +1018,9 @@ at_cmd_error_code handle_deviceinfo_command(char *params)
         ESP_LOGE(TAG, "Failed to get RGB switch value\n");
         return ERROR_DATA_READ_FAIL;
     }
+
+    int32_t voltage = bsp_battery_get_voltage();
+    int battery_percent = bsp_battery_get_percent();
 
     // Get the time configuration
     struct view_data_time_cfg cfg;
@@ -1022,16 +1047,20 @@ at_cmd_error_code handle_deviceinfo_command(char *params)
     cJSON_AddItemToObject(root, "data", data);
     cJSON_AddStringToObject(data, "eui", (const char *)eui_rsp);
     cJSON_AddStringToObject(data, "blemac", (const char *)bt_mac_rsp);
-    cJSON_AddStringToObject(data, "himaxsoftwareversion", (const char *)himax_version);
     cJSON_AddNumberToObject(data, "automatic", cfg.auto_update);
     cJSON_AddNumberToObject(data, "rgbswitch", rgb_switch);
     cJSON_AddNumberToObject(data, "sound", sound_value_resp);
     cJSON_AddNumberToObject(data, "brightness", brightness_value_resp);
     cJSON_AddStringToObject(data, "timestamp", timestamp_str);
     cJSON_AddNumberToObject(data, "timezone", cfg.zone);
-    // add Himax_Software_Versionfield
-
+    
     cJSON_AddStringToObject(data, "esp32softwareversion", (const char *)software_version);
+    if (himax_version != NULL)
+    {
+        cJSON_AddStringToObject(data, "himaxsoftwareversion", (const char *)himax_version);
+    }
+    cJSON_AddNumberToObject(data, "batterypercent", battery_percent);
+    cJSON_AddNumberToObject(data, "voltage", voltage); //mv
 
     char *json_string = cJSON_Print(root);
 
@@ -1072,8 +1101,12 @@ at_cmd_error_code handle_deviceinfo_command(char *params)
  */
 at_cmd_error_code handle_wifi_set(char *params)
 {
+    esp_err_t ret = 0;
     ESP_LOGI(TAG, "Handling wifi command\n");
-    char password[100];
+    
+    struct view_data_wifi_config config;
+    memset(&config, 0, sizeof(config));
+
     cJSON *json = cJSON_Parse(params);
     if (json == NULL)
     {
@@ -1086,102 +1119,60 @@ at_cmd_error_code handle_wifi_set(char *params)
     }
     cJSON *json_ssid = cJSON_GetObjectItemCaseSensitive(json, "ssid");
     cJSON *json_password = cJSON_GetObjectItemCaseSensitive(json, "password");
-
     // Get the SSID from the JSON
-    if (cJSON_IsString(json_ssid) && (json_ssid->valuestring != NULL))
+    if ((json_ssid != NULL) && cJSON_IsString(json_ssid) && (json_ssid->valuestring != NULL))
     {
         ESP_LOGI(TAG, "SSID in json: %s\n", json_ssid->valuestring);
-    }
-    else
-    {
+        strncpy(config.ssid, json_ssid->valuestring, sizeof(config.ssid) - 1);
+    }  else {
         ESP_LOGE(TAG, "SSID not found in JSON\n");
+        cJSON_Delete(json);
         return ERROR_CMD_JSON_TYPE;
     }
 
     // Get the password from the JSON
-    if (cJSON_IsString(json_password) && (json_password->valuestring != NULL))
+    if ((json_password != NULL) && cJSON_IsString(json_password) && (json_password->valuestring != NULL) && (strlen(json_password->valuestring) > 0))
     {
         ESP_LOGI(TAG, "Password in json : %s\n", json_password->valuestring);
+        config.have_password = true;
+        strncpy(config.password, json_password->valuestring, sizeof(config.password) - 1);
+    } else {
+        config.have_password = false;
     }
-    else
-    {
-        ESP_LOGE(TAG, "Password not found in JSON\n");
-        return ERROR_CMD_JSON_TYPE;
-    }
+    cJSON_Delete(json);
 
-    cJSON *root = cJSON_CreateObject();
-    if (root == NULL)
-    {
-        ESP_LOGE(TAG, "Failed to create JSON object\n");
-        return ERROR_CMD_JSON_CREATE;
-    }
-    cJSON *data = cJSON_CreateObject();
-    if (data == NULL)
-    {
-        ESP_LOGE(TAG, "Failed to create JSON object\n");
-        cJSON_Delete(root);
-        return ERROR_CMD_JSON_CREATE;
-    }
-    // add json obj
-    wifi_config *config = (wifi_config *)heap_caps_malloc(sizeof(wifi_config), MALLOC_CAP_SPIRAM);
-    if (config == NULL)
-    {
-        ESP_LOGE("AT_CMD_CALLER", "Failed to allocate memory for wifi_config");
-        cJSON_Delete(json);
-        return ERROR_CMD_MEM_ALLOC;
-    }
+    //clear
+    xSemaphoreTake(semaphorewificonnected, 0);
+    xSemaphoreTake(semaphorewifidisconnected, 0);
 
-    // Get the SSID from the JSON
-    if (json_ssid && json_ssid->valuestring)
-    {
-        strncpy(config->ssid, json_ssid->valuestring, sizeof(config->ssid) - 1);
-        config->ssid[sizeof(config->ssid) - 1] = '\0';
-    }
-    else
-    {
-        ESP_LOGE("AT_CMD_CALLER", "Invalid JSON SSID");
-        config->ssid[0] = '\0';
-        cJSON_Delete(json);
-        free(config);
-        return ERROR_CMD_JSON_TYPE;
-    }
-
-    // Get the password from the JSON
-    if (json_password && json_password->valuestring)
-    {
-        strncpy(config->password, json_password->valuestring, sizeof(config->password) - 1);
-        config->password[sizeof(config->password) - 1] = '\0';
-    }
-    else
-    {
-        ESP_LOGE("AT_CMD_CALLER", "Invalid JSON Password");
-        config->password[0] = '\0';
-        cJSON_Delete(json);
-        free(config);
-        return ERROR_CMD_JSON_TYPE;
-    }
-
-    config->caller = AT_CMD_CALLER;
-
-    int set_wifi_config_err = set_wifi_config(config);
-    if (set_wifi_config_err != ESP_OK)
-    {
-        ESP_LOGE(TAG, "Failed to set WiFi configuration\n");
-        cJSON_Delete(json);
-        free(config);
+    ret = esp_event_post_to(app_event_loop_handle, VIEW_EVENT_BASE, VIEW_EVENT_WIFI_CONNECT, &config, sizeof(struct view_data_wifi_config), pdMS_TO_TICKS(10000));
+    if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to esp_event_post_to wifi cfg\n");
         return ERROR_DATA_WRITE_FAIL;
     }
 
-    free(config);
-    config = NULL;
     vTaskDelay(5000 / portTICK_PERIOD_MS);
 
-    if ((xSemaphoreTake(semaphorewificonnected, portMAX_DELAY) == pdTRUE) || (xSemaphoreTake(semaphorewifidisconnected, portMAX_DELAY) == pdTRUE))
+    if ((xSemaphoreTake(semaphorewificonnected, pdMS_TO_TICKS(10000)) == pdTRUE) || (xSemaphoreTake(semaphorewifidisconnected, pdMS_TO_TICKS(10000)) == pdTRUE))
     {
-        cJSON_AddStringToObject(root, "name", config->ssid);
+        cJSON *root = cJSON_CreateObject();
+        if (root == NULL)
+        {
+            ESP_LOGE(TAG, "Failed to create JSON object\n");
+            return ERROR_CMD_JSON_CREATE;
+        }
+
+        cJSON *data = cJSON_CreateObject();
+        if (data == NULL)
+        {
+            ESP_LOGE(TAG, "Failed to create JSON object\n");
+            cJSON_Delete(root);
+            return ERROR_CMD_JSON_CREATE;
+        }
+        cJSON_AddStringToObject(root, "name", "wifi");
         cJSON_AddNumberToObject(root, "code", wifi_connect_failed_reason);
         cJSON_AddItemToObject(root, "data", data);
-        cJSON_AddStringToObject(data, "ssid", config->ssid);
+        cJSON_AddStringToObject(data, "ssid", config.ssid);
         char *json_string = cJSON_Print(root);
         ESP_LOGD(TAG, "JSON String: %s", json_string);
         esp_err_t send_result = send_at_response(json_string);
@@ -1243,6 +1234,8 @@ at_cmd_error_code handle_wifi_query(char *params)
     char rssi_str[10];
     snprintf(rssi_str, sizeof(rssi_str), "%d", current_connected_wifi.rssi);
     cJSON_AddStringToObject(data, "rssi", rssi_str);
+    const char *encryption = print_auth_mode(current_connected_wifi.authmode);
+    cJSON_AddStringToObject(data, "encryption", encryption);
 
     ESP_LOGI(TAG, "current_connected_wifi.ssid: %s", current_connected_wifi.ssid);
     ESP_LOGI(TAG, "current_connected_wifi.rssi: %d", current_connected_wifi.rssi);
