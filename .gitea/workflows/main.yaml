@@ -18,3 +18,15 @@ jobs:
         -w "$GITHUB_WORKSPACE/examples/factory_firmware" espressif/idf:v5.2.1 \
         /bin/bash -c 'git config --global --add safe.directory "*" && idf.py build'
       shell: bash
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: watcher-factory-fw
+        path: |
+          examples/factory_firmware/build/factory_firmware.*
+          examples/factory_firmware/build/bootloader/bootloader.bin
+          examples/factory_firmware/build/partition_table/partition-table.bin
+          examples/factory_firmware/build/srmodels/srmodels.bin
+          examples/factory_firmware/build/storage.bin
+
+
