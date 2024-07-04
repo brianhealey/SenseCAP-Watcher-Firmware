@@ -16,14 +16,22 @@ jobs:
         ref: ''
         submodules: 'recursive'
     - name: Copy Repo
+      # copy it 
       run: |
         pwd && ls
+        echo "RUNNER_NAME: $RUNNER_NAME"
+        echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
+        
         cp -rf ./* /opt/act/IAG-SE/SenseCAP-Watcher/
         ls /opt/act/IAG-SE/SenseCAP-Watcher/
-    - name: esp-idf build
+    - name: container bash
       run: |
-        export IDF_TARGET="esp32s3"
-        docker run -t -e IDF_TARGET="${IDF_TARGET}" -v "/opt/act/IAG-SE/SenseCAP-Watcher:/app/${{ github.repository }}" \
-        -w "/app/${{ github.repository }}/examples/factory_firmware" espressif/idf:v5.2.1 \
-        /bin/bash -c 'git config --global --add safe.directory "*" && idf.py build'
-      shell: bash
+          echo "GITHUB_ACTION_PATH: $GITHUB_ACTION_PATH"
+          docker run -t --volumes-from $RUNNER_NAME -w $GITHUB_WORKSPACE bash /usr/local/bin/bash -c 'ls'
+    # - name: esp-idf build
+    #   run: |
+    #     export IDF_TARGET="esp32s3"  
+    #     docker run -t -e IDF_TARGET="${IDF_TARGET}" -v "/opt/act/IAG-SE/SenseCAP-Watcher:/app/${{ github.repository }}" \
+    #     -w "/app/${{ github.repository }}/examples/factory_firmware" espressif/idf:v5.2.1 \
+    #     /bin/bash -c 'git config --global --add safe.directory "*" && idf.py build'
+    #   shell: bash
