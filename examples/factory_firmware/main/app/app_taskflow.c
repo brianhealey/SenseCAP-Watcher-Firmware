@@ -1,6 +1,7 @@
 #include "app_taskflow.h"
 #include "esp_err.h"
 #include "esp_check.h"
+#include "esp_timer.h"
 #include "event_loops.h"
 #include "data_defs.h"
 #include "storage.h"
@@ -16,6 +17,7 @@
 #include "tf_module_alarm_trigger.h"
 #include "tf_module_sensecraft_alarm.h"
 #include "tf_module_uart_alarm.h"
+#include "tf_module_http_alarm.h"
 #include "app_ota.h"
 
 static const char *TAG = "taskflow";
@@ -687,13 +689,17 @@ static void __view_event_handler(void* handler_args,
             int status = 0;
             esp_err_t ret = ESP_OK;
             tf_engine_status_get(&status);
-            if( status == TF_STATUS_RUNNING  || status ==  TF_STATUS_STARTING) {
+            if( status == TF_STATUS_RUNNING  || status ==  TF_STATUS_STARTING || status ==  TF_STATUS_PAUSE) {
                 tf_engine_stop();
                 __task_flow_clean();
             } else {
                 ESP_LOGI(TAG, "task flow already stopped");
+                intmax_t tlid = 0;
+                intmax_t ctd = 0;
+                tf_engine_ctd_get( &ctd );
+                tf_engine_tid_get( &tlid );
                 __report_lock(p_taskflow);
-                ret = app_sensecraft_mqtt_report_taskflow_status( 0, 0, TF_STATUS_STOP, NULL, 0);
+                ret = app_sensecraft_mqtt_report_taskflow_status( tlid, ctd, status, NULL, 0);
                 __report_unlock(p_taskflow);
                 if( ret != ESP_OK ) {
                     ESP_LOGW(TAG, "Failed to report taskflow status to MQTT server");
@@ -759,26 +765,22 @@ static void __view_event_handler(void* handler_args,
                 if( !p_taskflow->need_pause_taskflow ) {
                     ESP_LOGI(TAG, "taskflow need pause");
                     p_taskflow->need_pause_taskflow = true;
-                    if( p_taskflow->p_taskflow_json_backup != NULL) {
-                        free(p_taskflow->p_taskflow_json_backup);
-                        p_taskflow->p_taskflow_json_backup = NULL;
-                    }
-                    p_taskflow->p_taskflow_json_backup = tf_engine_flow_get();
-                    if( p_taskflow->p_taskflow_json_backup ) {
-                        ESP_LOGI(TAG, "backup taskflow and stop");
-                        tf_engine_stop();
-                    }
+                    tf_engine_pause();
                 }
             } else if ( SENSECRAFT_OTA_STATUS_FAIL == p_ota_st->status) {
                 ESP_LOGI(TAG, "ota fail");
-                if( p_taskflow->p_taskflow_json_backup ) {
-                    ESP_LOGI(TAG, "task flow need resume");
-                    tf_engine_flow_set( p_taskflow->p_taskflow_json_backup,  strlen(p_taskflow->p_taskflow_json_backup));
-                    free(p_taskflow->p_taskflow_json_backup);
-                    p_taskflow->p_taskflow_json_backup = NULL;
-                    p_taskflow->need_pause_taskflow = false;
-                }   
+                tf_engine_resume(); //maybe need resume
             }            
+            break;
+        }
+        case VIEW_EVENT_TASK_FLOW_PAUSE: {
+            ESP_LOGI(TAG, "event: VIEW_EVENT_TASK_FLOW_PAUSE");
+            tf_engine_pause();
+            break;
+        }
+        case VIEW_EVENT_TASK_FLOW_RESUME: {
+            ESP_LOGI(TAG, "event: VIEW_EVENT_TASK_FLOW_RESUME");
+            tf_engine_resume();
             break;
         }
         default:
@@ -991,11 +993,18 @@ static void __ctrl_event_handler(void* handler_args,
             __taskflow_start(p_taskflow, p_task_flow_str);
             break;
         }
+        case CTRL_EVENT_LOCAL_SVC_CFG_TASK_FLOW: {
+            ESP_LOGI(TAG, "event: CTRL_EVENT_LOCAL_SVC_CFG_TASK_FLOW");
+            tf_engine_restart();
+            break;
+        }
+
         default:
             break;
     }
-
 }
+
+
 static  void taskflow_engine_module_init( struct app_taskflow * p_taskflow)
 {
     ESP_ERROR_CHECK(tf_engine_init());
@@ -1007,6 +1016,7 @@ static  void taskflow_engine_module_init( struct app_taskflow * p_taskflow)
     ESP_ERROR_CHECK(tf_module_alarm_trigger_register());
     ESP_ERROR_CHECK(tf_module_sensecraft_alarm_register());
     ESP_ERROR_CHECK(tf_module_uart_alarm_register());
+    ESP_ERROR_CHECK(tf_module_http_alarm_register());
     //add more module
 
     ESP_ERROR_CHECK(tf_engine_status_cb_register(__task_flow_status_cb, p_taskflow));
@@ -1071,6 +1081,18 @@ esp_err_t app_taskflow_init(void)
                                                     VIEW_EVENT_OTA_STATUS, 
                                                     __view_event_handler, 
                                                     p_taskflow));
+    
+    ESP_ERROR_CHECK(esp_event_handler_register_with(app_event_loop_handle, 
+                                                    VIEW_EVENT_BASE, 
+                                                    VIEW_EVENT_TASK_FLOW_PAUSE, 
+                                                    __view_event_handler, 
+                                                    p_taskflow));
+
+    ESP_ERROR_CHECK(esp_event_handler_register_with(app_event_loop_handle, 
+                                                    VIEW_EVENT_BASE, 
+                                                    VIEW_EVENT_TASK_FLOW_RESUME, 
+                                                    __view_event_handler, 
+                                                    p_taskflow));
 
     ESP_ERROR_CHECK(esp_event_handler_register_with(app_event_loop_handle, 
                                                         CTRL_EVENT_BASE, 
@@ -1118,6 +1140,12 @@ esp_err_t app_taskflow_init(void)
                                                     CTRL_EVENT_BASE, 
                                                     CTRL_EVENT_MQTT_DISCONNECTED, 
                                                     __ctrl_event_handler, 
+                                                    p_taskflow));
+
+    ESP_ERROR_CHECK(esp_event_handler_register_with(app_event_loop_handle, 
+                                                    CTRL_EVENT_BASE, 
+                                                    CTRL_EVENT_LOCAL_SVC_CFG_TASK_FLOW, 
+                                                    __ctrl_event_handler,
                                                     p_taskflow));
 
     p_taskflow->mqtt_connect_flag = app_sensecraft_is_connected(); // Update connection flags.
