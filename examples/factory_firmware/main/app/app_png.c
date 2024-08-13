@@ -32,129 +32,7 @@
 
 #define ERR_EMOJI_DL_BAD_HTTP_LEN       0x200
 
-const char manifest_json[] = \
-"{  \
-    \"greeting1.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"27f6dcf567c8998d7613e92de956632e\",  \
-        \"size\": 25299  \
-    }],  \
-    \"greeting2.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"8129b5d053cccd27a06b1c8ff505f24f\",  \
-        \"size\": 26126  \
-    }],  \
-    \"greeting3.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"27f6dcf567c8998d7613e92de956632e\",  \
-        \"size\": 25299  \
-    }],  \
-    \"detecting1.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"5d85490ea8b96804257df3ec733a59b9\",  \
-        \"size\": 24828  \
-    }],  \
-    \"detecting2.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"a61f45078cbfbfcb4975b86761ae3072\",  \
-        \"size\": 30668  \
-    }],  \
-    \"detecting3.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"415a1b2e409805c20cfe496580c5989f\",  \
-        \"size\": 41195  \
-    }],  \
-    \"detecting4.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"240a57c329f601debccd54bf77789df9\",  \
-        \"size\": 30320  \
-    }],  \
-    \"detecting5.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"2fbb2d77a8cff9cf597f9ea5e4bf6f50\",  \
-        \"size\": 26572  \
-    }],  \
-    \"detected1.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"86985b7726fee05dd1e0fb09ce8fe1eb\",  \
-        \"size\": 41702  \
-    }],  \
-    \"detected2.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"46af667ccd7cc77aec7e10571bd48329\",  \
-        \"size\": 40278  \
-    }],  \
-    \"speaking1.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"e6aabf2716848775de7e242587c52ea3\",  \
-        \"size\": 36941  \
-    }],  \
-    \"speaking2.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"f86a568403f8ea7d343148817a05dec4\",  \
-        \"size\": 8164  \
-    }],  \
-    \"speaking3.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"e6aabf2716848775de7e242587c52ea3\",  \
-        \"size\": 36941  \
-    }],  \
-    \"listening1.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"6d1b1d8c0538801d0ab269a149755447\",  \
-        \"size\": 22670  \
-    }],  \
-    \"listening2.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"28563ffb3e2f52e6966c3eb0c195424f\",  \
-        \"size\": 21698  \
-    }],  \
-    \"standby1.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"40206d053f88b522ecd81fbaadafd2ab\",  \
-        \"size\": 25354  \
-    }],  \
-    \"standby2.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"b1455405767e00d15b61e22c62adafd9\",  \
-        \"size\": 29218  \
-    }],  \
-    \"standby3.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"94820b70ac5c8bb82776cee7cbce82e8\",  \
-        \"size\": 34889  \
-    }],  \
-    \"standby4.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"41e72f42890310eb4e8597d683f63f02\",  \
-        \"size\": 40102  \
-    }],  \
-    \"analyzing1.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"1ad6b8540f5237e2a2d65883c0900c5c\",  \
-        \"size\": 31945  \
-    }],  \
-    \"analyzing2.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"11a0c481b4fbf481efac4500fb80b825\",  \
-        \"size\": 32828  \
-    }],  \
-    \"analyzing3.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"6f84161057effdf479feca369c85b42f\",  \
-        \"size\": 31808  \
-    }],  \
-    \"analyzing4.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"8a79555539d0965f40edcf5a693b67bb\",  \
-        \"size\": 32057  \
-    }],  \
-    \"analyzing5.png\": [{  \
-        \"url\": \"www.baidu.com\",  \
-        \"checksum\": \"56a438f2aa1c4c53f13d3ad7eca2ba45\",  \
-        \"size\": 32889  \
-    }]  \
-}";
+const char manifest_json[] = "";
 
 
 typedef struct {
@@ -199,6 +77,131 @@ int g_standby_image_count = 0;
 int g_greet_image_count = 0;
 int g_detected_image_count = 0;
 
+int cur_loaded_png_count = 0;
+BuiltInEmojiCount builtin_emoji_count;
+CustomEmojiCount custom_emoji_count;
+
+void init_builtin_emoji_count(BuiltInEmojiCount *count) {
+    count->speaking_count = 0;
+    count->listening_count = 0;
+    count->greeting_count = 0;
+    count->standby_count = 0;
+    count->detecting_count = 0;
+    count->detected_count = 0;
+    count->analyzing_count = 0;
+}
+
+void init_custom_emoji_count(CustomEmojiCount *count) {
+    count->custom_speaking_count = 0;
+    count->custom_listening_count = 0;
+    count->custom_greeting_count = 0;
+    count->custom_standby_count = 0;
+    count->custom_detecting_count = 0;
+    count->custom_detected_count = 0;
+    count->custom_analyzing_count = 0;
+}
+
+// Function to count PNG images and categorize them based on predefined names and "Custom" prefix
+void count_png_images(BuiltInEmojiCount *builtin_count, CustomEmojiCount *custom_count) {
+    DIR *dir;
+    struct dirent *ent;
+
+    if ((dir = opendir("/spiffs")) != NULL) {
+        while ((ent = readdir(dir)) != NULL) {
+            if (ent->d_type == DT_REG) {  // Ensure this is a file and not a directory
+                size_t len = strlen(ent->d_name);
+                if (len > 4 && strcmp(ent->d_name + len - 4, ".png") == 0) {  // Check if the file ends with ".png"
+                    
+                    // Check for built-in emoji names
+                    if (strncmp(ent->d_name, "speaking", 8) == 0) {
+                        builtin_count->speaking_count++;
+                    } else if (strncmp(ent->d_name, "listening", 9) == 0) {
+                        builtin_count->listening_count++;
+                    } else if (strncmp(ent->d_name, "greeting", 8) == 0) {
+                        builtin_count->greeting_count++;
+                    } else if (strncmp(ent->d_name, "standby", 7) == 0) {
+                        builtin_count->standby_count++;
+                    } else if (strncmp(ent->d_name, "detecting", 9) == 0) {
+                        builtin_count->detecting_count++;
+                    } else if (strncmp(ent->d_name, "detected", 8) == 0) {
+                        builtin_count->detected_count++;
+                    } else if (strncmp(ent->d_name, "analyzing", 9) == 0) {
+                        builtin_count->analyzing_count++;
+                    }
+
+                    // Check for custom emoji names
+                    if (strncmp(ent->d_name, "Custom_speaking", 15) == 0) {
+                        custom_count->custom_speaking_count++;
+                    } else if (strncmp(ent->d_name, "Custom_listening", 16) == 0) {
+                        custom_count->custom_listening_count++;
+                    } else if (strncmp(ent->d_name, "Custom_greeting", 15) == 0) {
+                        custom_count->custom_greeting_count++;
+                    } else if (strncmp(ent->d_name, "Custom_standby", 14) == 0) {
+                        custom_count->custom_standby_count++;
+                    } else if (strncmp(ent->d_name, "Custom_detecting", 16) == 0) {
+                        custom_count->custom_detecting_count++;
+                    } else if (strncmp(ent->d_name, "Custom_detected", 15) == 0) {
+                        custom_count->custom_detected_count++;
+                    } else if (strncmp(ent->d_name, "Custom_analyzing", 16) == 0) {
+                        custom_count->custom_analyzing_count++;
+                    }
+                }
+            }
+        }
+        closedir(dir);
+    } else {
+        ESP_LOGE("SPIFFS", "Failed to open directory: /spiffs");
+    }
+
+    if(custom_count->custom_speaking_count == 0){
+        cur_loaded_png_count += builtin_count->speaking_count;
+    }else
+    {
+        cur_loaded_png_count += custom_count->custom_speaking_count;
+    }
+    if(custom_count->custom_listening_count == 0){
+        cur_loaded_png_count += builtin_count->listening_count;
+    }else
+    {
+        cur_loaded_png_count += custom_count->custom_listening_count;
+    }
+    if(custom_count->custom_detecting_count == 0){
+        cur_loaded_png_count += builtin_count->detecting_count;
+    }else
+    {
+        cur_loaded_png_count += custom_count->custom_detecting_count;
+    }
+    if(custom_count->custom_detected_count == 0){
+        cur_loaded_png_count += builtin_count->detected_count;
+    }else
+    {
+        cur_loaded_png_count += custom_count->custom_detected_count;
+    }
+    if(custom_count->custom_standby_count == 0){
+        cur_loaded_png_count += builtin_count->standby_count;
+    }else
+    {
+        cur_loaded_png_count += custom_count->custom_standby_count;
+    }
+    if(custom_count->custom_analyzing_count == 0){
+        cur_loaded_png_count += builtin_count->analyzing_count;
+    }else
+    {
+        cur_loaded_png_count += custom_count->custom_analyzing_count;
+    }
+    if(custom_count->custom_greeting_count == 0){
+        cur_loaded_png_count += builtin_count->greeting_count;
+    }else
+    {
+        cur_loaded_png_count += custom_count->custom_greeting_count;
+    }
+
+    // ESP_LOGI("PNG Count", "Built-in Speaking: %d", builtin_count->speaking_count);
+    // ESP_LOGI("PNG Count", "Custom Speaking: %d", custom_count->custom_speaking_count);
+    ESP_LOGI("PNG Count", "total loaded png: %d", cur_loaded_png_count);
+}
+
+
 void create_img_dsc(lv_img_dsc_t **img_dsc, void *data, size_t size) {
     *img_dsc = (lv_img_dsc_t *)heap_caps_malloc(sizeof(lv_img_dsc_t), MALLOC_CAP_SPIRAM);
 
@@ -210,6 +213,22 @@ void create_img_dsc(lv_img_dsc_t **img_dsc, void *data, size_t size) {
     (*img_dsc)->header.always_zero = 0;
     (*img_dsc)->header.w = 412;
     (*img_dsc)->header.h = 412;
+    (*img_dsc)->header.cf = LV_IMG_CF_TRUE_COLOR_ALPHA;
+    (*img_dsc)->data_size = size;
+    (*img_dsc)->data = data;
+}
+
+void create_customed_img_dsc(lv_img_dsc_t **img_dsc, void *data, size_t size) {
+    *img_dsc = (lv_img_dsc_t *)heap_caps_malloc(sizeof(lv_img_dsc_t), MALLOC_CAP_SPIRAM);
+
+    if (*img_dsc == NULL) {
+        ESP_LOGE("Image DSC", "Failed to allocate memory for image descriptor");
+        return;
+    }
+
+    (*img_dsc)->header.always_zero = 0;
+    (*img_dsc)->header.w = 240;
+    (*img_dsc)->header.h = 240;
     (*img_dsc)->header.cf = LV_IMG_CF_TRUE_COLOR_ALPHA;
     (*img_dsc)->data_size = size;
     (*img_dsc)->data = data;
@@ -461,7 +480,7 @@ static int compare_file_names(const void *a, const void *b) {
 }
 
 // Helper function to load images based on prefix
-bool load_images(const char *prefix, lv_img_dsc_t **img_dsc_array, int *image_count) {
+bool load_images(const char *prefix, lv_img_dsc_t **img_dsc_array, int *image_count, int img_type) {
     DIR *dir;
     struct dirent *ent;
     bool loaded = false;
@@ -503,7 +522,8 @@ bool load_images(const char *prefix, lv_img_dsc_t **img_dsc_array, int *image_co
         if (data) {
             ESP_LOGI("PNG Load", "Loaded %s into PSRAM", matched_files[i]);
 
-            create_img_dsc(&img_dsc_array[*image_count], data, size);
+            if(img_type == 0)create_img_dsc(&img_dsc_array[*image_count], data, size);
+            if(img_type == 1)create_customed_img_dsc(&img_dsc_array[*image_count], data, size);
             (*image_count)++;
             loaded = true;
             esp_event_post_to(app_event_loop_handle, VIEW_EVENT_BASE, VIEW_EVENT_PNG_LOADING, NULL, NULL, pdMS_TO_TICKS(10000));
@@ -519,12 +539,36 @@ void read_and_store_selected_pngs(const char *primary_prefix, const char *second
     bool image_loaded = false;
 
     // Try loading images with primary prefix
-    image_loaded = load_images(primary_prefix, img_dsc_array, image_count);
+    image_loaded = load_images(primary_prefix, img_dsc_array, image_count, 0);
 
     // If no images loaded with primary prefix, try secondary prefix
     if (!image_loaded) {
         ESP_LOGW("PNG Load", "No images found with primary prefix %s, trying secondary prefix %s", primary_prefix, secondary_prefix);
-        image_loaded = load_images(secondary_prefix, img_dsc_array, image_count);
+        image_loaded = load_images(secondary_prefix, img_dsc_array, image_count, 0);
+    }
+
+    // If no images loaded with either prefix, create black images with labels
+    if (!image_loaded && *image_count < MAX_IMAGES) {
+        ESP_LOGW("PNG Load", "No images found with either prefix, creating black images with labels");
+        size_t size = 412 * 412 * 3; // Assuming the size for a 412x412 image with alpha channel
+        void *black_data = create_black_image_with_label(size, primary_prefix);
+        if (black_data) {
+            create_img_dsc(&img_dsc_array[*image_count], black_data, size);
+            (*image_count)++;
+        }
+    }
+}
+
+void read_and_store_selected_customed_pngs(const char *primary_prefix, const char *secondary_prefix, lv_img_dsc_t **img_dsc_array, int *image_count) {
+    bool image_loaded = false;
+
+    // Try loading images with primary prefix
+    image_loaded = load_images(primary_prefix, img_dsc_array, image_count, 1);
+
+    // If no images loaded with primary prefix, try secondary prefix
+    if (!image_loaded) {
+        ESP_LOGW("PNG Load", "No images found with primary prefix %s, trying secondary prefix %s", primary_prefix, secondary_prefix);
+        image_loaded = load_images(secondary_prefix, img_dsc_array, image_count, 1);
     }
 
     // If no images loaded with either prefix, create black images with labels

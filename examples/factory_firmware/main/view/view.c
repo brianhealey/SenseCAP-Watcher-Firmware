@@ -15,9 +15,11 @@
 #include "ui_manager/animation.h"
 #include "ui_manager/event.h"
 
-#define PNG_IMG_NUMS 24
-
 static const char *TAG = "view";
+
+extern BuiltInEmojiCount builtin_emoji_count;
+extern CustomEmojiCount custom_emoji_count;
+extern int cur_loaded_png_count;
 
 static int png_loading_count = 0;
 static bool battery_flag_toggle = 0;
@@ -44,8 +46,8 @@ char *push2talk_item[TASK_CFG_ID_MAX];
 extern lv_obj_t *push2talk_textarea;
 
 // sleep mode
-extern int g_sleep_switch;
-extern uint8_t sleep_mode;
+extern int g_screenoff_switch;
+extern uint8_t screenoff_mode;
 
 extern uint8_t emoji_switch_scr;
 
@@ -147,14 +149,14 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
 
             case VIEW_EVENT_PNG_LOADING:{
                 png_loading_count++;
-                int progress_percentage = (png_loading_count * 100) / PNG_IMG_NUMS;
+                int progress_percentage = (png_loading_count * 100) / cur_loaded_png_count;
                 if(progress_percentage <= 100){
                     lv_arc_set_value(ui_Arc1, progress_percentage);
                     static char load_per[5];
                     sprintf(load_per, "%d%%", progress_percentage);
                     lv_label_set_text(ui_loadpert, load_per);
                 }
-                if(progress_percentage>=50)
+                if (progress_percentage % 17 <= 3) 
                 {
                     lv_event_send(ui_Page_Loading, LV_EVENT_SCREEN_LOADED, NULL);
                 }
@@ -164,6 +166,8 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
             case VIEW_EVENT_EMOJI_DOWLOAD_BAR:{
                 ESP_LOGI(TAG, "event: VIEW_EVENT_EMOJI_DOWLOAD_BAR");
                 if(lv_scr_act() == ui_Page_OTA){break;}
+                int push2talk_direct_exit = 0;
+                esp_event_post_to(app_event_loop_handle, VIEW_EVENT_BASE, VIEW_EVENT_VI_EXIT, &push2talk_direct_exit, sizeof(push2talk_direct_exit), pdMS_TO_TICKS(10000));
                 int *emoji_download_per = (int *)event_data;
                 static char download_per[5];
 
@@ -211,6 +215,8 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
                 {
                     pre_foucsed_obj = lv_group_get_focused(g_main);
                 }
+                lv_obj_clear_flag(ui_emoticonok, LV_OBJ_FLAG_HIDDEN);
+                lv_obj_add_flag(ui_faceper, LV_OBJ_FLAG_HIDDEN);
                 lv_group_add_obj(g_main, ui_emoticonok);
                 lv_group_focus_obj(ui_emoticonok);
                 lv_group_focus_freeze(g_main, true);
@@ -227,6 +233,12 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
             case VIEW_EVENT_INFO_OBTAIN:{
                 ESP_LOGI(TAG, "event: VIEW_EVENT_INFO_OBTAIN");
                 view_info_obtain();
+                break;
+            }
+
+            case VIEW_EVENT_SCREEN_TRIGGER:{
+                ESP_LOGI(TAG, "event: VIEW_EVENT_SCREEN_TRIGGER");
+                lv_disp_trig_activity(NULL);
                 break;
             }
 
@@ -440,7 +452,7 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
                 tf_data_buf_free(&(alarm_st->text));
                 tf_data_image_free(&(alarm_st->img));
 
-                if(g_sleep_switch == 1 && sleep_mode == 1)
+                if(g_screenoff_switch == 1 && screenoff_mode == 1)
                 {
                     int brightness = get_brightness(UI_CALLER);
                     bsp_lcd_brightness_set(brightness);
@@ -455,7 +467,7 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
                 uint8_t * task_st = (uint8_t *)event_data;
                 view_alarm_off(task_st);
 
-                if(sleep_mode == 1)
+                if(screenoff_mode == 1)
                 {
                     bsp_lcd_brightness_set(0);
                 }
@@ -477,6 +489,7 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
             case VIEW_EVENT_TASK_FLOW_STOP:{
                 ESP_LOGI(TAG, "event: VIEW_EVENT_TASK_FLOW_STOP");
                 if(lv_scr_act() == ui_Page_OTA){break;}
+                if(g_taskflow_pause == 1)g_taskflow_pause = 0;
                 lv_obj_add_flag(ui_viewavap, LV_OBJ_FLAG_HIDDEN);
                 // event_post_to
                 g_taskdown = 1;
@@ -539,6 +552,7 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
                 ESP_LOGI(TAG, "event: VIEW_EVENT_OTA_STATUS");
                 struct view_data_ota_status * ota_st = (struct view_data_ota_status *)event_data;
                 ESP_LOGI(TAG, "VIEW_EVENT_OTA_STATUS: %d", ota_st->status);
+                hide_all_overlays();
                 int push2talk_direct_exit = 0;
                 if(lv_scr_act() != ui_Page_OTA && ota_st->status >= 1  && ota_st->status <= 3)
                 {
@@ -554,6 +568,7 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
                     lv_obj_add_flag(ui_otaback, LV_OBJ_FLAG_HIDDEN);
                     lv_obj_add_flag(ui_otaicon, LV_OBJ_FLAG_HIDDEN);
                     lv_obj_clear_flag(ui_otaspinner, LV_OBJ_FLAG_HIDDEN);
+                    esp_event_post_to(app_event_loop_handle, VIEW_EVENT_BASE, VIEW_EVENT_VI_EXIT, &push2talk_direct_exit, sizeof(push2talk_direct_exit), pdMS_TO_TICKS(10000));
                 }else if (ota_st->status == 2)
                 {
                     ESP_LOGI(TAG, "OTA download succeeded");
@@ -571,7 +586,6 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
                     lv_obj_add_flag(ui_otaspinner, LV_OBJ_FLAG_HIDDEN);
                     lv_obj_clear_flag(ui_otaback, LV_OBJ_FLAG_HIDDEN);
                 }
-                esp_event_post_to(app_event_loop_handle, VIEW_EVENT_BASE, VIEW_EVENT_VI_EXIT, &push2talk_direct_exit, sizeof(push2talk_direct_exit), pdMS_TO_TICKS(10000));
                 break;
             }
 
@@ -607,6 +621,8 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
                 if(lv_scr_act() == ui_Page_OTA){break;}
                 g_is_push2talk = 1;
 
+                view_sleep_timer_stop();
+                view_push2talk_animation_timer_stop();
                 view_push2talk_timer_stop();
                 lv_group_remove_all_objs(g_main);
 
@@ -638,6 +654,7 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
                 if(lv_scr_act() == ui_Page_OTA){break;}
                 lv_obj_clear_flag(ui_p2texit, LV_OBJ_FLAG_HIDDEN);
                 lv_obj_add_flag(push2talk_textarea, LV_OBJ_FLAG_HIDDEN);
+                lv_group_add_obj(g_main, ui_Page_Push2talk);
                 
                 emoji_switch_scr = SCREEN_PUSH2TALK;
                 emoji_timer(EMOJI_ANALYZING);
@@ -663,7 +680,7 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
                     g_push2talk_timer = 0;
 
                     if (push2talk_result->p_audio_text != NULL) {
-                        ESP_LOGI("push2talk", "audio text : %s", push2talk_result->p_audio_text);
+                        // ESP_LOGI("push2talk", "audio text : %s", push2talk_result->p_audio_text);
                         int push2talk_audio_time = push2talk_result->audio_tm_ms;
                         ESP_LOGI("push2talk", "audio time : %d", push2talk_audio_time);
 
@@ -675,7 +692,7 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
                     lv_obj_add_flag(ui_p2texit, LV_OBJ_FLAG_HIDDEN);
                     lv_obj_clear_flag(push2talk_textarea, LV_OBJ_FLAG_HIDDEN);
 
-                    emoji_switch_scr = SCREEN_PUSH2TALK;
+                    emoji_switch_scr = SCREEN_PUSH2TALK_SPEAK;
                     emoji_timer(EMOJI_SPEAKING);
                     g_push2talk_status = EMOJI_SPEAKING;
                 }
@@ -753,14 +770,21 @@ static void __view_event_handler(void* handler_args, esp_event_base_t base, int3
                 lv_obj_set_style_arc_color(ui_push2talkarc, lv_color_hex(0xD54941), LV_PART_INDICATOR | LV_STATE_DEFAULT);
 
                 lv_arc_set_value(ui_push2talkarc, 0);
+                g_push2talk_timer = 1;
                 view_push2talk_timer_start();
 
                 break;
 
             }
 
+            case VIEW_EVENT_VI_EXIT:{
+                view_sleep_timer_start();
+                break;
+            }
+
             case VIEW_EVENT_SENSOR:{
                 ESP_LOGI(TAG, "event: VIEW_EVENT_SENSOR");
+                if(lv_scr_act() != ui_Page_Extension)break;
 
                 struct view_data_sensor * sensor_data = (struct view_data_sensor *) event_data;
                 char sensor_temp[6] = "--";
@@ -965,6 +989,10 @@ int view_init(void)
     ESP_ERROR_CHECK(esp_event_handler_instance_register_with(app_event_loop_handle, 
                                                             VIEW_EVENT_BASE, VIEW_EVENT_VI_PLAYING, 
                                                             __view_event_handler, NULL, NULL));
+
+    ESP_ERROR_CHECK(esp_event_handler_instance_register_with(app_event_loop_handle, 
+                                                            VIEW_EVENT_BASE, VIEW_EVENT_VI_EXIT, 
+                                                            __view_event_handler, NULL, NULL));
     
     ESP_ERROR_CHECK(esp_event_handler_instance_register_with(app_event_loop_handle, 
                                                             VIEW_EVENT_BASE, VIEW_EVENT_VI_ERROR, 
@@ -980,6 +1008,10 @@ int view_init(void)
     
     ESP_ERROR_CHECK(esp_event_handler_instance_register_with(app_event_loop_handle,
                                                             VIEW_EVENT_BASE, VIEW_EVENT_SENSOR, 
+                                                            __view_event_handler, NULL, NULL));
+
+    ESP_ERROR_CHECK(esp_event_handler_instance_register_with(app_event_loop_handle,
+                                                            VIEW_EVENT_BASE, VIEW_EVENT_SCREEN_TRIGGER, 
                                                             __view_event_handler, NULL, NULL));
 
     if((bat_per < 1) && (! is_charging))
@@ -1005,10 +1037,14 @@ int view_init(void)
     vTaskDelay(pdMS_TO_TICKS(200));
     BSP_ERROR_CHECK_RETURN_ERR(bsp_lcd_brightness_set(50));
 
+    init_builtin_emoji_count(&builtin_emoji_count);
+    init_custom_emoji_count(&custom_emoji_count);
+    count_png_images(&builtin_emoji_count, &custom_emoji_count);
+
     read_and_store_selected_pngs("Custom_greeting",    "greeting", g_greet_img_dsc, &g_greet_image_count);
     read_and_store_selected_pngs("Custom_detecting",   "detecting", g_detect_img_dsc, &g_detect_image_count);
     read_and_store_selected_pngs("Custom_detected",    "detected", g_detected_img_dsc, &g_detected_image_count);
-    read_and_store_selected_pngs("Custom_speaking",    "speaking", g_speak_img_dsc, &g_speak_image_count);
+    read_and_store_selected_customed_pngs("Custom_speaking",    "speaking", g_speak_img_dsc, &g_speak_image_count);
     read_and_store_selected_pngs("Custom_listening",   "listening", g_listen_img_dsc, &g_listen_image_count);
     read_and_store_selected_pngs("Custom_analyzing",   "analyzing", g_analyze_img_dsc, &g_analyze_image_count);
     read_and_store_selected_pngs("Custom_standby",     "standby", g_standby_img_dsc, &g_standby_image_count);

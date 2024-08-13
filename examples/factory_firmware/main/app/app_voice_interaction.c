@@ -73,7 +73,11 @@ static void __record_start( struct app_voice_interaction *p_vi)
         ESP_LOGI(TAG, "vi not idle, stop it first");
         __vi_stop(p_vi);
     }
-    xEventGroupSetBits(p_vi->event_group, EVENT_RECORD_START);
+    if( ! p_vi->is_recording ) {
+        xEventGroupSetBits(p_vi->event_group, EVENT_RECORD_START);
+    } else {
+        ESP_LOGI(TAG, "already record");
+    }
 }
 
 static void __record_stop( struct app_voice_interaction *p_vi)
@@ -468,7 +472,7 @@ static void __status_machine_handle(struct app_voice_interaction *p_vi)
                                     VIEW_EVENT_VI_RECORDING, NULL, NULL, pdMS_TO_TICKS(10000));
 
             app_rgb_set(SR, RGB_BREATH_BLUE); //set RGB
-            app_audio_player_mem_block(sound_push2talk_data, sizeof(sound_push2talk_data), false, pdMS_TO_TICKS(390)); //file 370ms
+            app_audio_player_mem_block(sound_push2talk_data, sizeof(sound_push2talk_data), false, pdMS_TO_TICKS(570)); //file 370ms, take 562ms.
 
             app_audio_recorder_stream_start();
             p_vi->is_connecting = true;
@@ -671,6 +675,7 @@ static void __status_machine_handle(struct app_voice_interaction *p_vi)
             bool first_chunk = true;
             uint8_t *p_bin_data = NULL;
             size_t bin_len = 0;
+            int play_chunk_time_ms = 0;
 
             memset(&result, 0, sizeof(result));
 
@@ -711,8 +716,11 @@ static void __status_machine_handle(struct app_voice_interaction *p_vi)
                         } else {
                             app_audio_player_stream_send((uint8_t *)recv_buf, read_len, pdMS_TO_TICKS(500));
                         }
+                        ESP_LOGI(TAG, "stream time: %dms", app_audio_player_stream_time_get(content_length -(read_len-bin_len)));
+                        play_chunk_time_ms = app_audio_player_stream_time_get(chunk_len) + 200;
+                        ESP_LOGI(TAG, "play_chunk_time_ms:%d", play_chunk_time_ms);
                     } else {        
-                       app_audio_player_stream_send((uint8_t *)recv_buf, read_len, pdMS_TO_TICKS(500)); 
+                       app_audio_player_stream_send((uint8_t *)recv_buf, read_len, pdMS_TO_TICKS(play_chunk_time_ms)); 
                     }
                 }
                 if(__is_need_stop(p_vi)) {
