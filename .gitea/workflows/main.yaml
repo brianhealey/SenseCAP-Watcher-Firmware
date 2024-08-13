@@ -14,13 +14,13 @@ jobs:
     - name: esp-idf build
       run: |
         export IDF_TARGET="esp32s3"
-        rm -r examples/factory_firmware/build examples/factory_firmware/managed_components
-        rm -r examples/factory_firmware/dependencies.lock examples/factory_firmware/sdkconfig
         docker run -t -e IDF_TARGET="${IDF_TARGET}" --volumes-from=${{ env.JOB_CONTAINER_NAME }} \
         -w "$GITHUB_WORKSPACE/examples/factory_firmware" espressif/idf:v5.2.1 \
         /bin/bash -c 'git config --global --add safe.directory "*" && idf.py build'
         mv examples/factory_firmware/build examples/factory_firmware/build_release
-        rm -f examples/factory_firmware/sdkconfig
+        rm -f examples/factory_firmware/sdkconfig 
+        rm -f examples/factory_firmware/dependencies.lock
+        rm -r examples/factory_firmware/managed_components
         echo "CONFIG_ENABLE_TEST_ENV=y" | tee examples/factory_firmware/sdkconfig.defaults.esp32s3
         docker run -t -e IDF_TARGET="${IDF_TARGET}" --volumes-from=${{ env.JOB_CONTAINER_NAME }} \
         -w "$GITHUB_WORKSPACE/examples/factory_firmware" espressif/idf:v5.2.1 \
