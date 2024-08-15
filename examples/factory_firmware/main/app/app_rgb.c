@@ -108,37 +108,37 @@ void __select_service_set_rgb(int caller, int service)
         switch (service)
         {
             case RGB_BREATH_RED:
-                set_rgb_status(255, 0, 0, 1, 3, 5);
+                set_rgb_status(70, 1, 1, 1, 3, 5);
                 break;
             case RGB_BREATH_GREEN:
                 set_rgb_status(0, 255, 0, 1, 3, 5);
                 break;
             case RGB_BREATH_BLUE:
-                set_rgb_status(0, 0, 255, 1, 3, 5);
+                set_rgb_status(0, 5, 55, 1, 3, 5);
                 break;
             case RGB_BREATH_WHITE:
                 set_rgb_status(255, 255, 255, 1, 1, 5);
                 break;
             case RGB_BLINK_RED:
-                set_rgb_status(255, 0, 0, 2, 10, 50);
+                set_rgb_status(70, 1, 1, 2, 10, 50);
                 break;
             case RGB_BLINK_GREEN:
                 set_rgb_status(0, 255, 0, 2, 10, 50);
                 break;
             case RGB_BLINK_BLUE:
-                set_rgb_status(0, 0, 255, 2, 10, 50);
+                set_rgb_status(0, 5, 55, 2, 10, 50);
                 break;
             case RGB_BLINK_WHITE:
                 set_rgb_status(255, 255, 255, 2, 10, 50);
                 break;
             case RGB_FLARE_RED:
-                set_rgb_status(255, 0, 0, 3, 5, 25);
+                set_rgb_status(70, 1, 1, 3, 5, 25);
                 break;
             case RGB_FLARE_GREEN:
                 set_rgb_status(0, 255, 0, 3, 5, 25);
                 break;
             case RGB_FLARE_BLUE:
-                set_rgb_status(0, 0, 255, 3, 5, 25);
+                set_rgb_status(0, 5, 55, 3, 5, 25);
                 break;
             case RGB_FLARE_WHITE:
                 set_rgb_status(255, 255, 255, 3, 5, 25);
@@ -374,5 +374,12 @@ void app_rgb_set(int caller, rgb_service_t service)
 
     __data_lock();
     __select_service_set_rgb(caller, service);
+    __data_unlock();
+}
+
+void app_rgb_status_set(int r, int g, int b, int mode, int step, int delay_time)
+{
+    __data_lock();
+    set_rgb_status(r, g, b, mode, step, delay_time);
     __data_unlock();
 }
