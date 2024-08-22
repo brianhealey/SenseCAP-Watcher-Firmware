@@ -74,7 +74,7 @@ static lv_obj_t *push2talk_speak_img = NULL;
 
 static int current_img_index = 0;
 static uint8_t vir_load_count = 0;
-static uint32_t local_task_id;
+static uint32_t local_task_id = 4;
 static lv_timer_t *g_timer;
 static char *qrcode_content = NULL;
 
@@ -153,6 +153,7 @@ static lv_timer_t * view_extension_timer;
 // Bluetooth switch frequency filter
 static lv_timer_t * view_ble_switch_timer;
 
+static lv_timer_t * view_push2talk_expired_timer;
 // Sleep mode scanner
 #define ACTIVE_THRESHOLD (5000)
 static lv_timer_t * view_sleep_timer;
@@ -300,7 +301,6 @@ static void emoji_timer_callback(lv_timer_t *timer)
         if(vir_load_count > 8)
         {
             lv_event_send(ui_Page_Avatar, LV_EVENT_CLICKED, NULL);
-            view_sleep_timer_start();
         }
     }
     emoji_count ++;
@@ -460,6 +460,8 @@ void virscrload_cb(lv_event_t *e)
 
     viewInfoInit();
     view_info_obtain_early();
+    view_sleep_timer_start();
+    
     if(avatar_image == NULL)avatar_image = lv_img_create(ui_Page_ViewAva);
     if(virtual_image == NULL)virtual_image = lv_img_create(ui_Page_Avatar);
     if(flag_image == NULL)flag_image = lv_img_create(ui_Page_Flag);
@@ -542,7 +544,16 @@ void main2f_cb(lv_event_t *e)
 void main3c_cb(lv_event_t *e)
 {
     ESP_LOGI(CLICK_TAG, "main3c_cb");
-    lv_pm_open_page(g_main, &group_page_extension, PM_ADD_OBJS_TO_GROUP, &ui_Page_Extension, LV_SCR_LOAD_ANIM_NONE, 0, 0, &ui_Page_Extension_screen_init);
+    lv_group_remove_all_objs(g_main);   
+    bool is_hidden = true;
+    is_hidden = lv_obj_has_flag(ui_extensionNone, LV_OBJ_FLAG_HIDDEN);
+    if(!is_hidden)
+    {
+        _ui_screen_change(&ui_Page_Extension, LV_SCR_LOAD_ANIM_NONE, 0, 0, &ui_Page_Extension_screen_init);
+        lv_group_add_obj(g_main, ui_extenNoneback);
+    }else{
+        lv_pm_open_page(g_main, &group_page_extension, PM_ADD_OBJS_TO_GROUP, &ui_Page_Extension, LV_SCR_LOAD_ANIM_NONE, 0, 0, &ui_Page_Extension_screen_init);
+    }
 }
 
 void main3f_cb(lv_event_t *e)
@@ -580,6 +591,16 @@ void backmenu_cb(lv_event_t * e)
     {
         lv_pm_open_page(g_main, &group_page_main, PM_ADD_OBJS_TO_GROUP, &ui_Page_Home, LV_SCR_LOAD_ANIM_NONE, 0, 0, &ui_Page_Home_screen_init);
         lv_group_set_wrap(g_main, true);
+
+        if(g_tasktype == 0)
+        {
+            if(local_task_id == 0 || local_task_id == 1 || local_task_id == 2)
+            {
+                g_taskdown = 0;
+                esp_event_post_to(app_event_loop_handle, VIEW_EVENT_BASE, VIEW_EVENT_TASK_FLOW_START_BY_LOCAL, &local_task_id, sizeof(local_task_id), pdMS_TO_TICKS(10000));
+            }
+        }
+
         if(g_tasktype == 1)
         {
             esp_event_post_to(app_event_loop_handle, VIEW_EVENT_BASE, VIEW_EVENT_TASK_FLOW_RESUME, NULL, NULL, pdMS_TO_TICKS(10000));
@@ -1354,6 +1375,7 @@ void p2tclick_cb(lv_event_t * e)
         lv_obj_add_flag(ui_p2texit, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(push2talk_textarea, LV_OBJ_FLAG_HIDDEN);
 
+        lv_group_remove_all_objs(g_main);
         lv_group_add_obj(g_main, ui_push2talkarc);
 
         esp_event_post_to(app_event_loop_handle, VIEW_EVENT_BASE, VIEW_EVENT_VI_STOP, NULL, NULL, pdMS_TO_TICKS(10000));
@@ -1717,6 +1739,7 @@ static void Task_end()
 {
     g_taskdown = 1;
     g_alarm_p = 0;
+    local_task_id = 4;
     esp_event_post_to(app_event_loop_handle, VIEW_EVENT_BASE, VIEW_EVENT_ALARM_OFF, &g_taskdown, sizeof(uint8_t), pdMS_TO_TICKS(10000));
     esp_event_post_to(app_event_loop_handle, VIEW_EVENT_BASE, VIEW_EVENT_TASK_FLOW_STOP, NULL, NULL, pdMS_TO_TICKS(10000));
 
@@ -2563,7 +2586,7 @@ static void view_push2talk_timer_callback(lv_timer_t *timer)
         lv_arc_set_value(ui_push2talkarc, push2talk_arc+1);
         lv_event_send(ui_push2talkarc, LV_EVENT_VALUE_CHANGED, NULL);
     }
-    ESP_LOGI(TAG, "g_push2talk_timer: %d, g_push2talk_mode: %d, push2talk_timer_counter: %d ", g_push2talk_timer, g_push2talk_mode, push2talk_timer_counter);
+    // ESP_LOGI(TAG, "g_push2talk_timer: %d, g_push2talk_mode: %d, push2talk_timer_counter: %d ", g_push2talk_timer, g_push2talk_mode, push2talk_timer_counter);
 }
 
 void view_push2talk_timer_start()
@@ -2571,6 +2594,7 @@ void view_push2talk_timer_start()
     if (view_push2talk_timer != NULL) {
         lv_timer_del(view_push2talk_timer);
     }
+    push2talk_timer_counter = 0;
     view_push2talk_timer = lv_timer_create(view_push2talk_timer_callback, 1000, NULL); // 1000 ms = 1 second
 }
 
@@ -2692,5 +2716,29 @@ void view_extension_timer_stop()
     if (view_extension_timer != NULL) {
         lv_timer_del(view_extension_timer);
         view_extension_timer = NULL;
+    }
+}
+
+static void view_push2talk_expired_timer_callback(lv_timer_t * timer)
+{
+    ESP_LOGI(TAG, "view_push2talk_expired_timer_callback");
+    lv_event_send(ui_p2tcancel, LV_EVENT_CLICKED, NULL);
+    view_push2talk_expired_timer = NULL;
+}
+
+void view_push2talkexpired_timer_start()
+{
+    ESP_LOGI(TAG, "view_push2talkexpired_timer_start");
+    if (view_push2talk_expired_timer != NULL) {
+        lv_timer_del(view_push2talk_expired_timer);
+        view_push2talk_expired_timer = NULL;
+    }
+
+    view_push2talk_expired_timer = lv_timer_create(view_push2talk_expired_timer_callback, 900 * 600, NULL);
+    if (view_push2talk_expired_timer != NULL) {
+        lv_timer_set_repeat_count(view_push2talk_expired_timer, 1);
+        ESP_LOGI(TAG, "Timer successfully created and started.");
+    } else {
+        ESP_LOGE(TAG, "Failed to create view_push2talk_expired_timer");
     }
 }
