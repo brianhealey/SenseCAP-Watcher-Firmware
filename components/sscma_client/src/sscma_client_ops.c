@@ -232,7 +232,6 @@ static void sscma_client_process(void *arg)
 
             sscma_client_read(client, client->rx_buffer.data + client->rx_buffer.pos, rlen);
             client->rx_buffer.pos += rlen;
-            char *data = client->rx_buffer.data + client->rx_buffer.pos;
 
             int new_pos = 0;
             for (int i = 0; i < client->rx_buffer.pos; i++)
