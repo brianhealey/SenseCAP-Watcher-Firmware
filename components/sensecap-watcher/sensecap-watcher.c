@@ -310,6 +310,7 @@ esp_err_t bsp_rgb_init()
     };
 
     BSP_ERROR_CHECK_RETURN_ERR(led_strip_new_rmt_device(&bsp_strip_config, &bsp_rmt_config, &rgb_led_handle));
+    vTaskDelay(pdMS_TO_TICKS(10));
     led_strip_set_pixel(rgb_led_handle, 0, 0x00, 0x00, 0x00);
     led_strip_refresh(rgb_led_handle);
 
